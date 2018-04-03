@@ -3,6 +3,7 @@
 <link rel="import" href="../iron-icons/editor-icons.html">
 <link rel="import" href="../iron-icons/notification-icons.html">
 <link rel="import" href="../iron-icons/av-icons.html">
+<link rel="import" href="../iron-icons/device-icons.html">
 <link rel="import" href="../iron-icons/image-icons.html">
 <link rel="import" href="../materializecss-styles/materializecss-styles.html">
 <link rel="import" href="../hax-body-behaviors/hax-body-behaviors.html">
@@ -23,6 +24,11 @@ A LRN element
     <style include="materializecss-styles-colors">
       :host {
         display: block;
+        border: none;
+        transition: .6s border ease-in-out;
+      }
+      :host[drag-over] {
+        border: 4px dashed #2196F3;
       }
       .placeholder-inner {
         text-align: center;
@@ -59,7 +65,7 @@ A LRN element
          */
         iconFromType: {
           type: String,
-          computed: '_getIconFromType(type)',
+          computed: '_getIconFromType(type, dragOver)',
         },
         /**
          * Text place holder for describing this place holder element.
@@ -73,7 +79,7 @@ A LRN element
          */
         calcText: {
           type: String,
-          computed: '_getCalcText(text, type)',
+          computed: '_getCalcText(text, type, dragOver)',
         },
         /**
          * A media type to visualize and also bubble events off of.
@@ -81,13 +87,24 @@ A LRN element
         type: {
           type: String,
           value: 'text',
-        }
+        },
+        /**
+         * Bind dragging state to a variable so we can apply CSS.
+         */
+        dragOver: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true,
+        },
       },
       /**
        * Get the calculated text based on text being empty and type being set.
        */
-      _getCalcText: function(text, type) {
-        if (text === '') {
+      _getCalcText: function(text, type, dragOver) {
+        if (dragOver) {
+          return 'Upload file';
+        }
+        else if (text === '') {
           return 'Place holder for future ' + type + '.';
         }
         else {
@@ -98,30 +115,69 @@ A LRN element
        * Generate an icon based on the media type selected
        * for the place holder.
        */
-      _getIconFromType: function(type) {
-        switch (type) {
-          case 'document':
-            return 'editor:insert-drive-file';
-          break
-          case 'audio':
-            return 'av:music-video';
-          break;
-          case 'video':
-            return 'notification:ondemand-video';
-          break
-          case 'image':
-            return 'image:crop-original';
-          break
-          case 'media':
-            return 'editor:format-align-left';
-          break
-          case 'math':
-            return 'editor:functions';
-          break;
-          case 'text':
-          default:
-            return 'editor:format-align-left';
-          break;
+      _getIconFromType: function(type, dragOver) {
+        if (!dragOver) {
+          switch (type) {
+            case 'document':
+              return 'editor:insert-drive-file';
+            break
+            case 'audio':
+              return 'av:music-video';
+            break;
+            case 'video':
+              return 'notification:ondemand-video';
+            break
+            case 'image':
+              return 'image:crop-original';
+            break
+            case 'media':
+              return 'device:graphic-eq';
+            break
+            case 'math':
+              return 'editor:functions';
+            break;
+            case 'text':
+            default:
+              return 'editor:format-align-left';
+            break;
+          }
+        }
+        else {
+          // we are dragging, ignore icon
+          return 'icons:file-upload';
+        }
+      },
+      /**
+       * Attached event handlers for drag and drop.
+       */
+      ready: function() {
+        if (typeof this.__dropAdded === typeof undefined) {
+          this.__dropAdded = true;
+          this.addEventListener('dragover', function(e) {
+            this.dragOver = true;
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.add('dragover');
+          });
+
+          this.addEventListener('dragleave', function(e) {
+            this.dragOver = false;
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('dragover');
+          });
+          // self bind a drop event enough though something else
+          // will need to step in and do something with this.
+          // We are just making sure that this doesn't redirect the browser.
+          this.addEventListener('drop', function(e) {
+            this.dragOver = false;
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.remove('dragover');
+            e.placeHolderElement = this;
+            // fire this specialized event up so things like HAX can intercept
+            this.fire('place-holder-file-drop', e);
+          });
         }
       },
       /**
