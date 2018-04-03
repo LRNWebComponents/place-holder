@@ -1,7 +1,11 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-icons/editor-icons.html">
+<link rel="import" href="../iron-icons/notification-icons.html">
+<link rel="import" href="../iron-icons/av-icons.html">
+<link rel="import" href="../iron-icons/image-icons.html">
 <link rel="import" href="../materializecss-styles/materializecss-styles.html">
 <link rel="import" href="../hax-body-behaviors/hax-body-behaviors.html">
-<link rel="import" href="../schema-behaviors/schema-behaviors.html">
 <!--
 `place-holder`
 A LRN element
@@ -16,26 +20,109 @@ A LRN element
 
 <dom-module id="place-holder">
   <template>
-    <style>
+    <style include="materializecss-styles-colors">
       :host {
         display: block;
       }
+      .placeholder-inner {
+        text-align: center;
+        padding: 16px;
+      }
+      iron-icon.placeholder-icon {
+        margin: 0 auto;
+        width: 50%;
+        height: 50%;
+        display: block;
+      }
+      .placeholder-text {
+        line-height: 16px;
+        font-size: 12px;
+        font-style: italic;
+      }
     </style>
-    <h2>[[title]]</h2>
+    <div class="placeholder-inner grey lighten-3 grey-text text-darken-3">
+      <iron-icon icon="[[iconFromType]]" class="placeholder-icon"></iron-icon>
+      <span class="placeholder-text">[[calcText]]</span>
+    </div>
   </template>
 
   <script>
     Polymer({
 
       is: 'place-holder',
-      behaviors: [HAXBehaviors.PropertiesBehaviors, MaterializeCSSBehaviors.ColorBehaviors, SchemaBehaviors.Schema],
+      behaviors: [
+        HAXBehaviors.PropertiesBehaviors
+      ],
       properties: {
         /**
-         * Title
+         * calculate an icon based on the type that was used
          */
-        title: {
+        iconFromType: {
           type: String,
+          computed: '_getIconFromType(type)',
         },
+        /**
+         * Text place holder for describing this place holder element.
+         */
+        text: {
+          type: String,
+          value: '',
+        },
+        /**
+         * Calculate text based on the type in the event we have no default.
+         */
+        calcText: {
+          type: String,
+          computed: '_getCalcText(text, type)',
+        },
+        /**
+         * A media type to visualize and also bubble events off of.
+         */
+        type: {
+          type: String,
+          value: 'text',
+        }
+      },
+      /**
+       * Get the calculated text based on text being empty and type being set.
+       */
+      _getCalcText: function(text, type) {
+        if (text === '') {
+          return 'Place holder for future ' + type + '.';
+        }
+        else {
+          return text;
+        }
+      },
+      /**
+       * Generate an icon based on the media type selected
+       * for the place holder.
+       */
+      _getIconFromType: function(type) {
+        switch (type) {
+          case 'document':
+            return 'editor:insert-drive-file';
+          break
+          case 'audio':
+            return 'av:music-video';
+          break;
+          case 'video':
+            return 'notification:ondemand-video';
+          break
+          case 'image':
+            return 'image:crop-original';
+          break
+          case 'media':
+            return 'editor:format-align-left';
+          break
+          case 'math':
+            return 'editor:functions';
+          break;
+          case 'text':
+          default:
+            return 'editor:format-align-left';
+          break;
+        }
       },
       /**
        * Attached to the DOM, now fire.
@@ -47,38 +134,35 @@ A LRN element
           'canPosition': true,
           'canEditSource': false,
           'gizmo': {
-            'title': 'Sample gizmo',
-            'description': 'The user will be able to see this for selection in a UI.',
-            'icon': 'av:play-circle-filled',
+            'title': 'Placeholder content',
+            'description': 'A place holder that can be converted into the media type that\'s been selected',
+            'icon': 'image:transform',
             'color': 'grey',
-            'groups': ['Video', 'Media'],
+            'groups': ['Placeholder'],
             'handles': [
-              {
-                'type': 'video',
-                'url': 'source'
-              }
             ],
             'meta': {
-              'author': 'Your organization on github'
+              'author': 'LRNWebComponents'
             }
           },
           'settings': {
             'quick': [
-              {
-                'property': 'title',
-                'title': 'Title',
-                'description': 'The title of the element',
-                'inputMethod': 'textfield',
-                'icon': 'editor:title',
-              },
             ],
             'configure': [
               {
-                'property': 'title',
-                'title': 'Title',
-                'description': 'The title of the element',
-                'inputMethod': 'textfield',
-                'icon': 'editor:title',
+                'property': 'type',
+                'title': 'Type',
+                'description': 'Type of gizmo that this accepts for replacement.',
+                'inputMethod': 'select',
+                'options': {
+                  'text': 'Text / content',
+                  'document': 'Document / file',
+                  'audio': 'Audio',
+                  'video': 'Video',
+                  'image': 'Image',
+                  'media': 'Media',
+                  'math': 'Math',
+                },
               },
             ],
             'advanced': [
