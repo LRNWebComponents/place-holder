@@ -180,9 +180,18 @@ A LRN element
             e.preventDefault();
             e.stopPropagation();
             this.classList.remove('dragover');
-            e.placeHolderElement = this;
-            // fire this specialized event up so things like HAX can intercept
-            this.fire('place-holder-file-drop', e);
+            // this helps ensure that what gets drag and dropped is a file
+            // this prevents issues with selecting and dragging text (which triggers drag/drop)
+            // as well as compatibility with things that are legit in a draggable state
+            try {
+              if (e.dataTransfer.items[0].kind === 'file') {
+                e.placeHolderElement = this;
+                // fire this specialized event up so things like HAX can intercept
+                this.fire('place-holder-file-drop', e);
+              }
+            }
+            catch (e) {
+            }
           });
         }
       },
@@ -228,7 +237,10 @@ A LRN element
             ],
             'advanced': [
             ]
-          }
+          },
+          'saveOptions': {
+            'wipeSlot': true,
+          },
         };
         this.setHaxProperties(props);
       },
